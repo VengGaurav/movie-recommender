@@ -31,17 +31,13 @@ def recommend(title):
         if title_lower in movie_title.lower():
             matching_movies.append(movie_title)
     
-    print(f"Search for '{title}' found {len(matching_movies)} matches: {matching_movies}")
-    
     if not matching_movies:
         return []
     
     # Use the first matching movie for recommendations
     selected_movie = matching_movies[0]
-    print(f"Using movie: {selected_movie}")
     
     if selected_movie not in movie_indices:
-        print(f"Movie '{selected_movie}' not found in indices")
         return []
     
     idx = movie_indices[selected_movie]
@@ -50,25 +46,20 @@ def recommend(title):
     movie_indices_list = [i[0] for i in sim_scores]
     recommended = []
 
-    print(f"Top similar movies:")
+    # Use local data instead of API calls for faster results
     for i in movie_indices_list:
-        movie_title = movies.iloc[i]['title']
-        print(f"- {movie_title}")
-        info = fetch_movie_info(movie_title)
+        movie_data = movies.iloc[i]
+        info = {
+            'title': movie_data['title'],
+            'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
+            'poster': None  # We'll skip poster for now to improve speed
+        }
         recommended.append(info)
 
     return recommended
 
 
-@app.route("/test/<title>")
-def test_search(title):
-    """Test route to debug search functionality"""
-    results = recommend(title)
-    return {
-        "search_term": title,
-        "results_count": len(results),
-        "results": [{"title": r.get("title", "Unknown"), "overview": r.get("overview", "No overview")} for r in results]
-    }
+
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -87,9 +78,17 @@ def home():
         
         return render_template("index.html", results=results, query=title, selected_movie=selected_movie, matching_movies=matching_movies)
     else:
-        # Default movies shown on homepage
-        default_titles = ["Inception", "Interstellar", "The Dark Knight", "Avatar", "Avengers: Endgame"]
-        results = [fetch_movie_info(t) for t in default_titles]
+        # Default movies shown on homepage - use local data for speed
+        default_indices = [0, 1, 2, 3, 4]  # First 5 movies as examples
+        results = []
+        for idx in default_indices:
+            movie_data = movies.iloc[idx]
+            info = {
+                'title': movie_data['title'],
+                'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
+                'poster': None
+            }
+            results.append(info)
         return render_template("index.html", results=results, query=None, selected_movie=None, matching_movies=None)
 
 

@@ -11,7 +11,7 @@ def generate_similarity():
     movies['overview'] = movies['overview'].fillna('')
 
     # Create TF-IDF vectorizer and transform the overview column
-    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf = TfidfVectorizer(stop_words='english', max_features=5000)  # Limit features for speed
     tfidf_matrix = tfidf.fit_transform(movies['overview'])
 
     # Compute cosine similarity matrix
