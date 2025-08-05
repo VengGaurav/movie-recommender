@@ -31,6 +31,16 @@ def recommend(title):
         if title_lower in movie_title.lower():
             matching_movies.append(movie_title)
     
+    # If no exact matches, try partial matching
+    if not matching_movies:
+        for movie_title in movies['title']:
+            movie_words = movie_title.lower().split()
+            search_words = title_lower.split()
+            for search_word in search_words:
+                if any(search_word in word for word in movie_words):
+                    matching_movies.append(movie_title)
+                    break
+    
     if not matching_movies:
         return []
     
@@ -46,19 +56,19 @@ def recommend(title):
     movie_indices_list = [i[0] for i in sim_scores]
     recommended = []
 
-    # Use local data instead of API calls for faster results
+    # Use local data and get real posters from TMDB
     for i in movie_indices_list:
         movie_data = movies.iloc[i]
+        # Get real poster from TMDB API
+        poster_info = fetch_movie_info(movie_data['title'])
         info = {
             'title': movie_data['title'],
             'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
-            'poster': None  # We'll skip poster for now to improve speed
+            'poster': poster_info.get('poster', f"https://via.placeholder.com/300x450/1c1c1c/ffffff?text={movie_data['title'].replace(' ', '+')}")
         }
         recommended.append(info)
 
     return recommended
-
-
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -78,17 +88,40 @@ def home():
         
         return render_template("index.html", results=results, query=title, selected_movie=selected_movie, matching_movies=matching_movies)
     else:
-        # Default movies shown on homepage - use local data for speed
-        default_indices = [0, 1, 2, 3, 4]  # First 5 movies as examples
+        # Default movies shown on homepage - popular movies
+        popular_titles = ["Avatar", "The Dark Knight", "Inception", "Interstellar", "Avengers: Endgame"]
         results = []
-        for idx in default_indices:
-            movie_data = movies.iloc[idx]
-            info = {
-                'title': movie_data['title'],
-                'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
-                'poster': None
-            }
-            results.append(info)
+        
+        for title in popular_titles:
+            # Try to find the movie in our dataset
+            found = False
+            for idx, movie_title in enumerate(movies['title']):
+                if title.lower() in movie_title.lower():
+                    movie_data = movies.iloc[idx]
+                    # Get real poster from TMDB API
+                    poster_info = fetch_movie_info(movie_data['title'])
+                    info = {
+                        'title': movie_data['title'],
+                        'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
+                        'poster': poster_info.get('poster', f"https://via.placeholder.com/300x450/1c1c1c/ffffff?text={movie_data['title'].replace(' ', '+')}")
+                    }
+                    results.append(info)
+                    found = True
+                    break
+            
+            # If not found, use a fallback movie
+            if not found:
+                fallback_idx = len(results) % len(movies)
+                movie_data = movies.iloc[fallback_idx]
+                # Get real poster from TMDB API
+                poster_info = fetch_movie_info(movie_data['title'])
+                info = {
+                    'title': movie_data['title'],
+                    'overview': movie_data['overview'] if pd.notna(movie_data['overview']) else "No overview available.",
+                    'poster': poster_info.get('poster', f"https://via.placeholder.com/300x450/1c1c1c/ffffff?text={movie_data['title'].replace(' ', '+')}")
+                }
+                results.append(info)
+        
         return render_template("index.html", results=results, query=None, selected_movie=None, matching_movies=None)
 
 
