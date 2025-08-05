@@ -26,17 +26,22 @@ def recommend(title):
     title_lower = title.lower()
     matching_movies = []
     
+    # Search for movies containing the search term
     for movie_title in movies['title']:
         if title_lower in movie_title.lower():
             matching_movies.append(movie_title)
+    
+    print(f"Search for '{title}' found {len(matching_movies)} matches: {matching_movies}")
     
     if not matching_movies:
         return []
     
     # Use the first matching movie for recommendations
     selected_movie = matching_movies[0]
+    print(f"Using movie: {selected_movie}")
     
     if selected_movie not in movie_indices:
+        print(f"Movie '{selected_movie}' not found in indices")
         return []
     
     idx = movie_indices[selected_movie]
@@ -45,13 +50,25 @@ def recommend(title):
     movie_indices_list = [i[0] for i in sim_scores]
     recommended = []
 
+    print(f"Top similar movies:")
     for i in movie_indices_list:
         movie_title = movies.iloc[i]['title']
+        print(f"- {movie_title}")
         info = fetch_movie_info(movie_title)
         recommended.append(info)
 
     return recommended
 
+
+@app.route("/test/<title>")
+def test_search(title):
+    """Test route to debug search functionality"""
+    results = recommend(title)
+    return {
+        "search_term": title,
+        "results_count": len(results),
+        "results": [{"title": r.get("title", "Unknown"), "overview": r.get("overview", "No overview")} for r in results]
+    }
 
 @app.route("/", methods=["GET", "POST"])
 def home():
