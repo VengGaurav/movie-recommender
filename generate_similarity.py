@@ -1,25 +1,26 @@
 import pandas as pd
-import numpy as np
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
-# Load your dataset
-movies = pd.read_csv('movies.csv')
+def generate_similarity():
+    # Load the dataset
+    movies = pd.read_csv("movies.csv")
 
-# Combine important features into a single string
-def combine_features(row):
-    return str(row['title']) + " " + str(row['genres']) + " " + str(row['overview'])
+    # Fill any missing overviews with empty string
+    movies['overview'] = movies['overview'].fillna('')
 
-movies['combined'] = movies.apply(combine_features, axis=1)
+    # Create TF-IDF vectorizer and transform the overview column
+    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(movies['overview'])
 
-# Vectorize the combined features
-cv = CountVectorizer(stop_words='english')
-count_matrix = cv.fit_transform(movies['combined'])
+    # Compute cosine similarity matrix
+    similarity = cosine_similarity(tfidf_matrix)
 
-# Compute cosine similarity
-similarity = cosine_similarity(count_matrix)
+    # Save the similarity matrix to a .npy file
+    np.save("similarity.npy", similarity)
+    print("similarity.npy file generated successfully.")
 
-# Save to file
-np.save('similarity.npy', similarity)
-
-print("✅ similarity.npy generated successfully!")
+# Run the function if script is executed
+if __name__ == "__main__":
+    generate_similarity()

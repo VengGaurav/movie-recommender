@@ -1,20 +1,20 @@
-from flask import Flask, render_template, request
-import pandas as pd
-import numpy as np
 import os
-from tmdb import fetch_movie_info
+import numpy as np
+import pandas as pd
+from flask import Flask, request, render_template
 from generate_similarity import generate_similarity
 
 app = Flask(__name__)
 
-# Generate similarity.npy if it doesn't exist
+# Auto-generate similarity.npy if not present
 if not os.path.exists("similarity.npy"):
-    print("similarity.npy not found, generating...")
+    print("similarity.npy not found. Generating now...")
     generate_similarity()
 
-# Load your movie data
-movies = pd.read_csv("movies.csv")  # Make sure this file is pushed
+# Then load it
 similarity = np.load("similarity.npy", allow_pickle=True)
+movies = pd.read_csv("movies.csv")
+
 
 # Create a dictionary to map movie titles to indices
 movie_indices = pd.Series(movies.index, index=movies['title']).to_dict()
