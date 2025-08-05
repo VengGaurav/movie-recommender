@@ -52,8 +52,17 @@ def recommend(title):
     
     idx = movie_indices[selected_movie]
     sim_scores = list(enumerate(similarity[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:6]
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:11]  # Get more candidates
     movie_indices_list = [i[0] for i in sim_scores]
+    
+    # Filter out very low similarity scores
+    filtered_indices = []
+    for i, score in sim_scores:
+        if score > 0.1:  # Only include movies with decent similarity
+            filtered_indices.append(i)
+    
+    # Take top 5 from filtered results
+    movie_indices_list = filtered_indices[:5]
     recommended = []
 
     # Use local data and get real posters from TMDB
