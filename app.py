@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from flask import Flask, request, render_template
 from generate_similarity import generate_similarity
+from tmdb import fetch_movie_info
 
 app = Flask(__name__)
 
