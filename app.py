@@ -22,9 +22,24 @@ movie_indices = pd.Series(movies.index, index=movies['title']).to_dict()
 
 
 def recommend(title):
-    if title not in movie_indices:
+    # First, try to find the movie with fuzzy matching
+    title_lower = title.lower()
+    matching_movies = []
+    
+    for movie_title in movies['title']:
+        if title_lower in movie_title.lower():
+            matching_movies.append(movie_title)
+    
+    if not matching_movies:
         return []
-    idx = movie_indices[title]
+    
+    # Use the first matching movie for recommendations
+    selected_movie = matching_movies[0]
+    
+    if selected_movie not in movie_indices:
+        return []
+    
+    idx = movie_indices[selected_movie]
     sim_scores = list(enumerate(similarity[idx]))
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:6]
     movie_indices_list = [i[0] for i in sim_scores]
@@ -43,12 +58,22 @@ def home():
     if request.method == "POST":
         title = request.form["title"]
         results = recommend(title)
-        return render_template("index.html", results=results, query=title)
+        
+        # Find which movie was actually used for recommendations
+        title_lower = title.lower()
+        matching_movies = []
+        for movie_title in movies['title']:
+            if title_lower in movie_title.lower():
+                matching_movies.append(movie_title)
+        
+        selected_movie = matching_movies[0] if matching_movies else title
+        
+        return render_template("index.html", results=results, query=title, selected_movie=selected_movie, matching_movies=matching_movies)
     else:
         # Default movies shown on homepage
         default_titles = ["Inception", "Interstellar", "The Dark Knight", "Avatar", "Avengers: Endgame"]
         results = [fetch_movie_info(t) for t in default_titles]
-        return render_template("index.html", results=results, query=None)
+        return render_template("index.html", results=results, query=None, selected_movie=None, matching_movies=None)
 
 
 if __name__ == "__main__":

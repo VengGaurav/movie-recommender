@@ -19,22 +19,34 @@
     </form>
 
     {% if results %}
-    <h2>Recommended Movies:</h2>
-    <div class="grid">
-      {% for movie in results %}
-      <div class="card">
-        {% if movie.poster %}
-        <img src="{{ movie.poster }}" alt="{{ movie.title }} poster">
-        {% endif %}
-        <div class="card-content">
-          <h3>{{ movie.title }}</h3>
-          <p><strong>Rating:</strong> {{ movie.rating }} ⭐</p>
-          <p><strong>Release:</strong> {{ movie.release_date }}</p>
-          <p>{{ movie.overview }}</p>
+      {% if selected_movie %}
+        <div class="search-info">
+          <p><strong>Search:</strong> "{{ query }}"</p>
+          <p><strong>Found movie:</strong> "{{ selected_movie }}"</p>
+          {% if matching_movies and matching_movies|length > 1 %}
+            <p><strong>Other matches:</strong> 
+              {% for movie in matching_movies[1:] %}
+                "{{ movie }}"{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+          {% endif %}
         </div>
+      {% endif %}
+      
+      <h2>Recommended Movies:</h2>
+      <div class="grid">
+        {% for movie in results %}
+        <div class="card">
+          {% if movie.poster %}
+          <img src="{{ movie.poster }}" alt="{{ movie.title }} poster">
+          {% endif %}
+          <div class="card-content">
+            <h3>{{ movie.title }}</h3>
+            <p>{{ movie.overview }}</p>
+          </div>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
     {% endif %}
   </div>
 
